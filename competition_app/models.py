@@ -30,7 +30,7 @@ class Answer(models.Model):
     is_correct = models.BooleanField()
 
     def __str__(self):
-        return self.answer_text
+        return f"{self.answer_text} ({'✓' if self.is_correct else '✗'})"
 
 class QuizSession(models.Model):
 
@@ -43,7 +43,7 @@ class QuizSession(models.Model):
     is_completed = models.BooleanField(default= False)
 
     def __str__(self):
-        return self.user, self.score
+        return f"Quiz #{self.id} - {self.category.name} - Score: {self.score}/{self.total_question}"
 
 class UserAnswer(models.Model):
 
@@ -54,4 +54,4 @@ class UserAnswer(models.Model):
     answered_at = models.DateTimeField(auto_now_add= True)
 
     def __str__(self):
-        return self.is_correct
+        return f"Answer for Quiz #{self.quiz_session.id} - {'✓' if self.is_correct else '✗'}"

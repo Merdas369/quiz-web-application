@@ -28,6 +28,7 @@ def get_questions_from_api(category_id):
                     "difficulty": item.get("difficulty", "error"),
                     "correct_answer": item.get("correct_answer", "error"),
                     "all_answer": incorrect,
+                    "type": item.get("type", "error"),
                 }
             )
 
