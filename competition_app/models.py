@@ -36,6 +36,7 @@ class QuizSession(models.Model):
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete= models.CASCADE, null= True, blank= True)
     category = models.ForeignKey(Category, on_delete= models.CASCADE)
+    questions = models.ManyToManyField(Question)
     score = models.IntegerField()
     total_question = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add= True)

@@ -23,21 +23,25 @@ def quiz_start(req, category_id):
     result = get_questions_from_api(category_id)
     # making the new session for the quiz
     category = Category.objects.get(category_id=category_id)
-    quiz_session = QuizSession.objects.create(user= req.user if req.user.is_authenticated else None,
-                               category= category,
-                               score= 0, total_question= 10,
-                               completed_at= None,
-                               is_completed= False)
+    quiz_session = QuizSession.objects.create(
+        user=req.user if req.user.is_authenticated else None,
+        category= category,
+        score= 0,
+        total_question= 10
+    )
     # saving the all 10 questions in the question model
     for q in range(10):
        question, created = Question.objects.get_or_create(category= category,
                                 question= result[q]["question"], difficulty= result[q]["difficulty"],
                                 type= result[q]["type"])
-    # saving the answers in answer model correct answer and the 3 remain incorrect answer
-       for i in range(4):
-           Answer.objects.create(question= question,
-                answer_text= result[q]["all_answer"][i],
-                is_correct= True if result[q]["all_answer"][i] == result[q]["correct_answer"] else False)
+       # making the relationship between the session and the questions
+       quiz_session.questions.add(question)
+    # saving the answers in answer model correct answer and the 3 remain incorrect answer if any question is create
+       if created:
+           for i in range(4):
+               Answer.objects.create(question= question,
+                    answer_text= result[q]["all_answer"][i],
+                    is_correct= True if result[q]["all_answer"][i] == result[q]["correct_answer"] else False)
     return redirect("quiz_question", quiz_id= quiz_session.id, num= 1)
 
 
