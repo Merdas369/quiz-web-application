@@ -8,6 +8,7 @@ from competition_app.api_handler import get_questions_from_api
 import datetime as td
 import requests
 from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
 
 
 
@@ -32,18 +33,23 @@ def quiz_start(req, category_id):
         total_question= 10
     )
     # saving the all 10 questions in the question model
-    for q in range(10):
-       question, created = Question.objects.get_or_create(category= category,
-                                question= result[q]["question"], difficulty= result[q]["difficulty"],
-                                type= result[q]["type"])
-       # making the relationship between the session and the questions
-       quiz_session.questions.add(question)
+    for question_data in result:
+        question= Question.objects.create(
+            question=question_data["question"],
+                category= category,
+                difficulty= question_data["difficulty"],
+                type= question_data.get("type", "multiple")
+        )
+    # making the relationship between the session and the questions
+        quiz_session.questions.add(question)
     # saving the answers in answer model correct answer and the 3 remain incorrect answer if any question is create
-       if created:
-           for i in range(4):
-               Answer.objects.create(question= question,
-                    answer_text= result[q]["all_answer"][i],
-                    is_correct= True if result[q]["all_answer"][i] == result[q]["correct_answer"] else False)
+        for answer_text in question_data["all_answer"]:
+            is_correct = (answer_text == question_data["correct_answer"])
+            Answer.objects.create(
+                question=question,
+                answer_text=answer_text,
+                is_correct=is_correct
+            )
     return redirect("quiz_question", quiz_id= quiz_session.id, num= 1)
 
 @csrf_exempt
@@ -84,8 +90,15 @@ def quiz_question(req, quiz_id, num):
             return redirect('quiz_question', quiz_id=quiz_session.id, num=num + 1)
 
 def quiz_result(req, quiz_id):
-    return HttpResponse("<h1>quiz_result</h1>")
 
+    # finding the quiz session
+    quiz_session = QuizSession.objects.get(id= quiz_id)
 
-def leaderboard(req):
-    return HttpResponse("<h1>leaderboard</h1>")
+    # finding the user's answers and counting the correct answers
+    user_true_answers = UserAnswer.objects.filter(quiz_session= quiz_session, is_correct= True).count()
+
+    # updating the quiz_session
+    QuizSession.objects.filter(id= quiz_id).update(score= user_true_answers, completed_at= timezone.now(),
+                                is_completed= True)
+
+    return HttpResponse(f"<h2>you'r score is: {user_true_answers} from 10.")

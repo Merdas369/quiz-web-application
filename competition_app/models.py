@@ -16,7 +16,7 @@ class Category(models.Model):
 class Question(models.Model):
 
     category = models.ForeignKey(Category, on_delete= models.CASCADE)
-    question = models.TextField(unique= True)
+    question = models.TextField()
     difficulty = models.CharField(max_length=10)
     type = models.CharField(max_length=10)
 
