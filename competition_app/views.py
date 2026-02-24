@@ -6,6 +6,8 @@ from competition_app.models import Category, Question, Answer, QuizSession, User
 from django.contrib.auth.models import User
 from competition_app.api_handler import get_questions_from_api
 import datetime as td
+import requests
+from django.views.decorators.csrf import csrf_exempt
 
 
 
@@ -44,10 +46,42 @@ def quiz_start(req, category_id):
                     is_correct= True if result[q]["all_answer"][i] == result[q]["correct_answer"] else False)
     return redirect("quiz_question", quiz_id= quiz_session.id, num= 1)
 
-
+@csrf_exempt
 def quiz_question(req, quiz_id, num):
-    return HttpResponse("<h1>quiz_question</h1>")
 
+    quiz_session = QuizSession.objects.get(id=quiz_id)
+    questions = quiz_session.questions.all().order_by('id')
+    question = questions[num - 1]
+
+    if req.method == "GET":
+        answers = Answer.objects.filter(question=question)
+        text = f"<h2>Question {num} from 10:</h2>"
+        text += f"<p>{question.question}</p>"
+        text += f"<form method='POST'>"
+
+        for answer in answers:
+            text += f"<input type='radio' name='answer_id' value='{answer.id}'> {answer.answer_text}<br>"
+
+        text += "<br><button type='submit'>submit and continue</button>"
+        text += "</form>"
+
+        return HttpResponse(text)
+
+    elif req.method == "POST":
+        answer_id = req.POST.get('answer_id')
+        selected_answer = Answer.objects.get(id=answer_id)
+
+        UserAnswer.objects.create(
+            quiz_session=quiz_session,
+            question=question,
+            selected_answer=selected_answer,
+            is_correct=selected_answer.is_correct
+        )
+
+        if num == 10:
+            return redirect('quiz_result', quiz_id=quiz_session.id)
+        else:
+            return redirect('quiz_question', quiz_id=quiz_session.id, num=num + 1)
 
 def quiz_result(req, quiz_id):
     return HttpResponse("<h1>quiz_result</h1>")
