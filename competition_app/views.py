@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from competition_app.models import Category, Question, Answer, QuizSession, UserAnswer
 from django.contrib.auth.models import User
 from competition_app.api_handler import get_questions_from_api
-import datetime as td
+from django.urls import reverse
 import requests
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
@@ -18,7 +18,15 @@ from django.utils import timezone
 
 
 def home(req):
-    return HttpResponse("<h1>home page</h1>")
+    categories = Category.objects.all()
+
+    html = "<h1>choose a category:</h1>"
+
+    for category in categories:
+        url = reverse('quiz_start', kwargs={'category_id': category.category_id})
+        html += f"<a href='{url}'><button>{category.name}</button></a><br><br>"
+
+    return HttpResponse(html)
 
 
 def quiz_start(req, category_id):
