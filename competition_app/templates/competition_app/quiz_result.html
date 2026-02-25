@@ -1,0 +1,72 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Result</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'competition_app/quiz_result.css' %}">
+</head>
+<body>
+    <div class="container">
+        <div class="result-container">
+            <!-- Header -->
+            <div class="header">
+                <h1>🎯 QuizMaster</h1>
+                <p class="subtitle">Quiz Complete!</p>
+            </div>
+
+            <!-- Emoji & Message -->
+            <div class="emoji-section">
+                <div class="emoji">{{ emoji }}</div>
+                <h2 class="message">{{ message }}</h2>
+            </div>
+
+            <!-- Score Display -->
+            <div class="score-section">
+                <div class="score-circle">
+                    <div class="score-number">{{ correct_answers }}</div>
+                    <div class="score-total">/ {{ total_questions }}</div>
+                </div>
+                <div class="percentage">{{ percentage|floatformat:0 }}%</div>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-section">
+                <div class="stat-item">
+                    <div class="stat-label">Category</div>
+                    <div class="stat-value">{{ quiz_session.category.name }}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Correct Answers</div>
+                    <div class="stat-value correct">{{ correct_answers }}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Wrong Answers</div>
+                    <div class="stat-value wrong">{{ total_questions|add:"-"|add:correct_answers }}</div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="actions-section">
+                <a href="{% url 'home' %}" class="btn-primary">
+                    🏠 Back to Home
+                </a>
+                <a href="{% url 'quiz_start' quiz_session.category.category_id %}" class="btn-secondary">
+                    🔄 Try Again
+                </a>
+            </div>
+
+            <!-- Motivational Quote -->
+            <div class="quote-section">
+                {% if percentage >= 70 %}
+                    <p>"The more that you read, the more things you will know. The more that you learn, the more places you'll go." - Dr. Seuss</p>
+                {% else %}
+                    <p>"Success is not final, failure is not fatal: it is the courage to continue that counts." - Winston Churchill</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

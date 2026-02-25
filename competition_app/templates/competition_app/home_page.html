@@ -1,0 +1,40 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'competition_app/style.css' %}">
+    <title>QuizMaster</title>
+</head>
+<body>
+
+<p>Welcome to <em><b>QuizMaster</b></em>🎯
+<br>
+QuizMaster is a web-based quiz application designed to challenge your knowledge, help you learn new facts, and make testing your skills simple and enjoyable.<br> The platform offers a collection of trivia-style quizzes across different topics, allowing users to quickly jump in and start playing.
+
+No sign-up is required just choose a quiz, answer the questions, and instantly see your results. The goal is to provide a smooth and accessible quiz experience for anyone who wants to learn, practice, or simply have fun.
+
+This project was built as a complete end-to-end web application, showcasing the full development process from idea to deployment. It demonstrates how a real-world quiz platform can be structured, implemented, and expanded with additional features over time.<br>
+<hr>
+<b>Key features:</b><br>
+• Multiple trivia quizzes in different categories<br>
+• Instant results and score feedback<br>
+• Clean and simple user experience<br>
+• No account required — start immediately<br>
+• Built as a fully deployable portfolio project<br>
+<hr>
+<b>Future improvements:</b><br>
+• Leaderboard system<br>
+• More quiz categories<br>
+• User progress tracking<br>
+
+    <b>Start your first quiz and test your knowledge now:</b> 🚀
+</p>
+<h1>Choose a category!</h1>
+{% for category in categories %}
+    <a href= '{% url  "quiz_start" category.category_id %}' ><button>{{category.name}}</button></a>
+{% endfor %}
+<hr>
+</body>
+</html>

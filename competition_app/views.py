@@ -1,16 +1,10 @@
-from itertools import count
-from django.contrib.auth import user_logged_in
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from competition_app.models import Category, Question, Answer, QuizSession, UserAnswer
-from django.contrib.auth.models import User
 from competition_app.api_handler import get_questions_from_api
 from django.urls import reverse
-import requests
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
-
-
 
 
 
@@ -18,20 +12,19 @@ from django.utils import timezone
 
 
 def home(req):
-    categories = Category.objects.all()
+    context = {"categories": Category.objects.all()}
+    # for category in categories:
+    #     url = reverse('quiz_start', kwargs={'category_id': category.category_id})
+    #     html += f"<a href='{url}'><button>{category.name}</button></a><br><br>"
 
-    html = "<h1>choose a category:</h1>"
-
-    for category in categories:
-        url = reverse('quiz_start', kwargs={'category_id': category.category_id})
-        html += f"<a href='{url}'><button>{category.name}</button></a><br><br>"
-
-    return HttpResponse(html)
+    return render(req, "competition_app/home_page.html", context)
 
 
 def quiz_start(req, category_id):
     # getting the result dictionary from the api
     result = get_questions_from_api(category_id)
+    if len(result) < 10:
+        return HttpResponse(f"خطا: فقط {len(result)} سوال دریافت شد! باید ۱۰ تا باشه. لطفاً دوباره تلاش کنید.")
     # making the new session for the quiz
     category = Category.objects.get(category_id=category_id)
     quiz_session = QuizSession.objects.create(
@@ -60,29 +53,26 @@ def quiz_start(req, category_id):
             )
     return redirect("quiz_question", quiz_id= quiz_session.id, num= 1)
 
-@csrf_exempt
-def quiz_question(req, quiz_id, num):
 
+@csrf_exempt
+def quiz_question(request, quiz_id, num):
     quiz_session = QuizSession.objects.get(id=quiz_id)
     questions = quiz_session.questions.all().order_by('id')
     question = questions[num - 1]
+    answers = Answer.objects.filter(question=question)
 
-    if req.method == "GET":
-        answers = Answer.objects.filter(question=question)
-        text = f"<h2>Question {num} from 10:</h2>"
-        text += f"<p>{question.question}</p>"
-        text += f"<form method='POST'>"
+    if request.method == "GET":
+        context = {
+            'quiz_session': quiz_session,
+            'question': question,
+            'answers': answers,
+            'num': num,
+        }
 
-        for answer in answers:
-            text += f"<input type='radio' name='answer_id' value='{answer.id}'> {answer.answer_text}<br>"
+        return render(request, 'competition_app/quiz_question.html', context)
 
-        text += "<br><button type='submit'>submit and continue</button>"
-        text += "</form>"
-
-        return HttpResponse(text)
-
-    elif req.method == "POST":
-        answer_id = req.POST.get('answer_id')
+    elif request.method == "POST":
+        answer_id = request.POST.get('answer_id')
         selected_answer = Answer.objects.get(id=answer_id)
 
         UserAnswer.objects.create(
@@ -97,16 +87,47 @@ def quiz_question(req, quiz_id, num):
         else:
             return redirect('quiz_question', quiz_id=quiz_session.id, num=num + 1)
 
-def quiz_result(req, quiz_id):
 
-    # finding the quiz session
-    quiz_session = QuizSession.objects.get(id= quiz_id)
+def quiz_result(request, quiz_id):
+    # Get the quiz session
+    quiz_session = QuizSession.objects.get(id=quiz_id)
 
-    # finding the user's answers and counting the correct answers
-    user_true_answers = UserAnswer.objects.filter(quiz_session= quiz_session, is_correct= True).count()
+    # Count correct answers
+    correct_answers = UserAnswer.objects.filter(
+        quiz_session=quiz_session,
+        is_correct=True
+    ).count()
 
-    # updating the quiz_session
-    QuizSession.objects.filter(id= quiz_id).update(score= user_true_answers, completed_at= timezone.now(),
-                                is_completed= True)
+    # Update quiz session
+    quiz_session.score = correct_answers
+    quiz_session.completed_at = timezone.now()
+    quiz_session.is_completed = True
+    quiz_session.save()
 
-    return HttpResponse(f"<h2>you'r score is: {user_true_answers} from 10.")
+    # Calculate percentage
+    percentage = (correct_answers / 10) * 100
+
+    # Determine performance message
+    if percentage >= 90:
+        message = "Outstanding! You're a trivia master!"
+        emoji = "🏆"
+    elif percentage >= 70:
+        message = "Great job! You know your stuff!"
+        emoji = "🎉"
+    elif percentage >= 50:
+        message = "Good effort! Keep learning!"
+        emoji = "👍"
+    else:
+        message = "Don't give up! Practice makes perfect!"
+        emoji = "💪"
+
+    context = {
+        'quiz_session': quiz_session,
+        'correct_answers': correct_answers,
+        'total_questions': 10,
+        'percentage': percentage,
+        'message': message,
+        'emoji': emoji,
+    }
+
+    return render(request, 'competition_app/quiz_result.html', context)

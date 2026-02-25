@@ -1,0 +1,54 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Question {{ num }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'competition_app/quiz_question.css' %}">
+</head>
+<body>
+    <div class="container">
+        <div class="quiz-container">
+            <div class="header">
+                <h1>🎯 QuizMaster</h1>
+                <div class="progress-info">
+                    <span class="question-number">question {{ num }} from 10.</span>
+                    <span class="category-name">Category: {{ quiz_session.category.name }}</span>
+                </div>
+            </div>
+
+            <div class="question-box">
+                <h2 class="question-text">{{ question.question }}</h2>
+            </div>
+
+            <form method="POST" class="answers-form">
+                {% csrf_token %}
+                <div class="answers-container">
+                    {% for answer in answers %}
+                    <div class="answer-option">
+                        <input type="radio"
+                               name="answer_id"
+                               value="{{ answer.id }}"
+                               id="answer_{{ answer.id }}"
+                               required>
+                        <label for="answer_{{ answer.id }}">
+                            {{ answer.answer_text }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="submit-container">
+                    {% if num == 10 %}
+                        <button type="submit" class="submit-btn">see the result</button>
+                    {% else %}
+                        <button type="submit" class="submit-btn">Next question →</button>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
